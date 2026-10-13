@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CadenceDesk Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#f4f6f5;--panel:#fff;--ink:#17252b;--mute:#5d6e75;--line:#d9e0de;--accent:#1b6b5a;--accent-ink:#fff;--chip:#e6efec;--warn:#a4412c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181b;--panel:#172226;--ink:#e8efed;--mute:#9bacb2;--line:#2a3a40;--accent:#4fb59d;--accent-ink:#08201a;--chip:#1f2f33;--warn:#e58a72}}
+:root[data-theme="dark"]{--bg:#10181b;--panel:#172226;--ink:#e8efed;--mute:#9bacb2;--line:#2a3a40;--accent:#4fb59d;--accent-ink:#08201a;--chip:#1f2f33;--warn:#e58a72}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:28px 18px 60px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between;margin-bottom:20px}
+h1{font-size:28px;line-height:1.1;margin:0;font-weight:700;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:4px 0 0}
+.bar{display:flex;gap:8px;flex-wrap:wrap}
+input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.link{border:0;background:none;color:var(--accent);padding:2px 4px;text-decoration:underline}
+button.danger{color:var(--warn)}
+form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:22px}
+form[hidden]{display:none}
+fieldset{border:0;margin:0 0 14px;padding:0}
+legend{font-weight:600;margin-bottom:8px;padding:0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+label input,label select{font-size:15px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.err{color:var(--warn);font-size:13px}
+.wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--line)}
+th{font-size:13px;font-weight:600;color:var(--mute);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td a{color:var(--accent);word-break:break-all}
+.co{font-weight:600}
+.role{color:var(--mute);font-size:13px}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:2px 10px;font-size:13px}
+.empty{padding:36px 18px;text-align:center;color:var(--mute)}
+.note{color:var(--mute);font-size:13px;margin-top:14px}
+textarea.n{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:90px;resize:vertical;width:100%}
+textarea.n:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.notes{white-space:pre-wrap;min-width:180px;max-width:300px;font-size:14px}
+.due{color:var(--warn);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:22px}
+.panel[hidden]{display:none}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+h2{font-size:18px;margin:0}
+#ll{list-style:none;padding:0;margin:14px 0 0}
+#ll li{padding:8px 0;border-top:1px solid var(--line)}
+.mt{margin-top:12px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>CadenceDesk <span class="role">demo</span></h1>
+    <p class="sub" id="count">0 decks</p>
+  </div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search company, person or notes" aria-label="Search">
+    <select id="f" aria-label="Filter by status"><option value="">All statuses</option><option>Draft</option><option>Sent</option><option>Replied</option><option>Call booked</option><option>Closed</option></select>
+    <button id="bulk">Bulk add</button>
+    <button id="due">Due now</button>
+    <button id="csv">Export CSV</button>
+    <button id="hs">Export for HubSpot</button>
+    <button id="add" class="primary">Add company</button>
+  </div>
+</header>
+
+<section id="bp" class="panel" hidden>
+  <div class="phead"><h2>Bulk add</h2><button type="button" id="bpx">Close</button></div>
+  <p class="role">Paste rows from Google Sheets or Excel, one company per row. Column order: company, company LinkedIn, persona 1 name, title, LinkedIn, persona 2 name, title, LinkedIn, deck link. Only the company is required. Duplicates are skipped.</p>
+  <textarea id="bt" class="n mt" rows="8" placeholder="Zendesk, https://www.linkedin.com/company/zendesk/"></textarea>
+  <div class="actions mt"><button type="button" class="primary" id="ba">Add rows</button><span class="role" id="bm" role="status"></span></div>
+</section>
+
+<form id="form" hidden>
+  <fieldset><legend>Company</legend>
+    <div class="grid">
+      <label>Company name<input name="company" required></label>
+      <label>Company LinkedIn URL<input name="companyLi" placeholder="linkedin.com/company/..."></label>
+      <label>Deck link (Canva or PDF)<input name="deck" placeholder="canva.com/design/..."></label>
+      <label>Status<select name="status"><option>Draft</option><option>Sent</option><option>Replied</option><option>Call booked</option><option>Closed</option></select></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Persona 1</legend>
+    <div class="grid">
+      <label>Name<input name="p1Name"></label>
+      <label>Title<input name="p1Title" placeholder="e.g. VP Sales"></label>
+      <label>LinkedIn URL<input name="p1Li" placeholder="linkedin.com/in/..."></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Persona 2</legend>
+    <div class="grid">
+      <label>Name<input name="p2Name"></label>
+      <label>Title<input name="p2Title" placeholder="e.g. SDR Manager"></label>
+      <label>LinkedIn URL<input name="p2Li" placeholder="linkedin.com/in/..."></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Notes</legend>
+    <label>Notes<textarea name="notes" class="n" placeholder="Trigger event, what you sent, follow-up dates, replies..."></textarea></label>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="primary" id="save">Save company</button>
+    <button type="button" id="cancel">Cancel</button>
+    <span class="err" id="err" role="alert"></span>
+  </div>
+</form>
+
+<section id="lp" class="panel" hidden>
+  <div class="phead"><h2 id="lpt"></h2><button type="button" id="lpx">Close</button></div>
+  <div class="grid">
+    <label>Persona status<select id="lps"></select></label>
+    <label>Next follow-up<input type="date" id="lpn"></label>
+  </div>
+  <div class="grid mt">
+    <label>Date<input type="date" id="led"></label>
+    <label>Channel<select id="lec"><option>Email</option><option>LinkedIn</option><option>Call</option><option>Loom</option><option>Other</option></select></label>
+    <label>What happened<input id="len" placeholder="Sent email 1, they replied..."></label>
+  </div>
+  <div class="actions mt"><button type="button" class="primary" id="lea">Add to log</button></div>
+  <ul id="ll"></ul>
+</section>
+
+<div class="wrap"><table>
+  <thead><tr><th>Company</th><th>Persona 1</th><th>Persona 2</th><th>Deck</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+  <tbody id="body"></tbody>
+</table><div class="empty" id="empty">No companies yet. Select Add company to log your first deck.</div></div>
+<p class="note" id="note">Demo copy with sample data. Entries are saved in this browser only.</p>
+<textarea id="out" readonly hidden rows="8" aria-label="CSV export" style="width:100%;margin-top:10px;font:13px monospace;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px"></textarea>
+</main>
+<script>
+(function(){
+var KEY="deck-tracker-v1",rows=[],editing=null,dueOnly=false,lpRow=null,lpP=null,ST=["Not contacted","Contacted","Replied","Positive","Not interested","Referred"];
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function pst(r,p){return r[p+"Status"]||"Not contacted"}
+function plog(r,p){return Array.isArray(r[p+"Log"])?r[p+"Log"]:[]}
+function isDue(r,p){var n=r[p+"Next"];return !!n&&n<=today()&&pst(r,p)!=="Not interested"}
+var $=function(id){return document.getElementById(id)};
+function seed(){var dt=function(n){var x=new Date();x.setDate(x.getDate()+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+ return[
+ {id:"demo1",company:"Northwind Cloud",companyLi:"",p1Name:"Alex Morgan",p1Title:"VP Sales",p1Li:"",p1Status:"Contacted",p1Next:dt(-1),p1Log:[{d:dt(-1),c:"LinkedIn",t:"Sent connection request with a short note"},{d:dt(-4),c:"Email",t:"Intro email about their AE hiring plans"}],p2Name:"Riya Kapoor",p2Title:"Sales Development Manager",p2Li:"",p2Status:"Not contacted",deck:"",status:"Sent",notes:"Sample company. Trigger: hiring 5 AEs this quarter."},
+ {id:"demo2",company:"Brightpath Analytics",companyLi:"",p1Name:"Sam Lee",p1Title:"Head of Sales",p1Li:"",p1Status:"Replied",p1Next:dt(2),p1Log:[{d:dt(-2),c:"Email",t:"Replied, asked for a 15-minute call next week"},{d:dt(-6),c:"Email",t:"Sent deck with sample outreach"}],p2Name:"Jordan Rao",p2Title:"Sales Development Representative",p2Li:"",p2Status:"Contacted",p2Next:dt(5),p2Log:[{d:dt(-3),c:"LinkedIn",t:"Asked for 10 minutes to hear about the role"}],deck:"",status:"Replied",notes:"Sample company. Mention their new product launch."},
+ {id:"demo3",company:"Acme Support Desk",companyLi:"",p1Name:"Maya Iyer",p1Title:"Sales Development Manager",p1Li:"",p1Status:"Positive",p1Next:dt(0),p1Log:[{d:dt(-5),c:"Call",t:"Short call, interested in seeing the plan"}],p2Name:"",p2Title:"",p2Li:"",deck:"",status:"Draft",notes:"Sample company for demo screenshots."}
+ ]}
+function load(){try{var r=localStorage.getItem(KEY);rows=r?JSON.parse(r):seed();if(!Array.isArray(rows))rows=seed()}catch(e){rows=seed();$("note").textContent="Browser storage is unavailable here, so entries last only until you close this page. Use Export CSV to keep them."}}
+var cloud=null,pt=null;
+function push(){if(!cloud)return;clearTimeout(pt);pt=setTimeout(function(){cloud.set({rows:rows,updated:Date.now()}).catch(function(){$("note").textContent="Could not sync to your account. Your data is still saved in this browser, so use Export CSV as a backup."})},400)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(rows))}catch(e){$("note").textContent="Could not save to browser storage. Use Export CSV to keep your data."}push()}
+function url(v){v=(v||"").trim();if(!v)return"";return /^https?:\/\//i.test(v)?v:"https://"+v}
+function el(t,props,kids){var n=document.createElement(t);for(var k in props||{}){if(k==="text")n.textContent=props[k];else n.setAttribute(k,props[k])}(kids||[]).forEach(function(c){if(c)n.appendChild(c)});return n}
+function link(href,text){return href?el("a",{href:href,target:"_blank",rel:"noopener noreferrer",text:text}):null}
+function person(r,p){var name=r[p+"Name"],title=r[p+"Title"],li=r[p+"Li"],td=el("td");if(!name&&!title&&!li){td.textContent="Not added";td.className="role";return td}
+ td.appendChild(el("div",{text:name||"Unnamed"}));if(title)td.appendChild(el("div",{"class":"role",text:title}));var l=link(url(li),"LinkedIn");if(l)td.appendChild(l);
+ var lg=plog(r,p);td.appendChild(el("div",{},[el("span",{"class":"chip",text:pst(r,p)})]));
+ var nx=r[p+"Next"];if(nx){var du=isDue(r,p);td.appendChild(el("div",{"class":du?"role due":"role",text:(du?"Due ":"Follow up ")+nx}))}
+ if(lg.length)td.appendChild(el("div",{"class":"role",text:"Last touch "+lg[0].d}));
+ var b=el("button",{"class":"link",type:"button",text:"Log ("+lg.length+")"});b.onclick=function(){openLog(r.id,p)};td.appendChild(b);return td}
+function render(){
+ var q=$("q").value.toLowerCase(),f=$("f").value,body=$("body");body.textContent="";
+ var list=rows.filter(function(r){var hay=[r.company,r.p1Name,r.p2Name,r.p1Title,r.p2Title,r.notes].join(" ").toLowerCase();return(!q||hay.indexOf(q)>-1)&&(!f||r.status===f)&&(!dueOnly||isDue(r,"p1")||isDue(r,"p2"))});
+ list.forEach(function(r){
+  var c=el("td");c.appendChild(el("div",{"class":"co",text:r.company}));var cl=link(url(r.companyLi),"LinkedIn");if(cl)c.appendChild(cl);
+  var d=el("td");var dl=link(url(r.deck),"Open deck");if(dl)d.appendChild(dl);else{d.textContent="No link";d.className="role"}
+  var s=el("td",{},[el("span",{"class":"chip",text:r.status})]);
+  var ed=el("button",{"class":"link",type:"button",text:"Edit"});ed.onclick=function(){openForm(r.id)};
+  var del=el("button",{"class":"link danger",type:"button",text:"Delete"});del.onclick=function(){if(confirm("Delete "+r.company+"?")){rows=rows.filter(function(x){return x.id!==r.id});save();render()}};
+  var n=el("td",{"class":"notes"});if(r.notes){n.textContent=r.notes}else{n.textContent="No notes";n.className="notes role"}
+  var a=el("td",{},[ed,del]);
+  body.appendChild(el("tr",{},[c,person(r,"p1"),person(r,"p2"),d,s,n,a]));
+ });
+ $("empty").hidden=list.length>0;
+ var dn=rows.reduce(function(a,r){return a+(isDue(r,"p1")?1:0)+(isDue(r,"p2")?1:0)},0);$("due").textContent=dueOnly?"Show all":"Due now ("+dn+")";
+ $("empty").textContent=rows.length?"No matches. Try a different search or status.":"No companies yet. Select Add company to log your first deck.";
+ $("count").textContent=rows.length+(rows.length===1?" deck":" decks")+" tracked";
+}
+function openForm(id){
+ editing=id||null;var f=$("form");f.reset();$("err").textContent="";
+ if(id){var r=rows.filter(function(x){return x.id===id})[0];if(r)Object.keys(r).forEach(function(k){if(f.elements[k])f.elements[k].value=r[k]})}
+ $("save").textContent=id?"Save changes":"Save company";f.hidden=false;f.elements.company.focus();
+}
+$("add").onclick=function(){openForm()};
+$("cancel").onclick=function(){$("form").hidden=true};
+$("form").onsubmit=function(e){
+ e.preventDefault();var f=e.target,o={};["company","companyLi","deck","status","p1Name","p1Title","p1Li","p2Name","p2Title","p2Li","notes"].forEach(function(k){o[k]=f.elements[k].value.trim()});
+ if(!o.company){$("err").textContent="Enter a company name.";return}
+ if(editing){rows=rows.map(function(r){return r.id===editing?Object.assign({},r,o):r})}else{o.id=String(Date.now())+Math.random().toString(36).slice(2,6);rows.unshift(o)}
+ save();f.hidden=true;render();
+};
+$("q").oninput=render;$("f").onchange=render;
+$("csv").onclick=function(){
+ if(!rows.length){alert("Nothing to export yet.");return}
+ var h=["Company","Company LinkedIn","Persona 1 name","Persona 1 title","Persona 1 LinkedIn","Persona 2 name","Persona 2 title","Persona 2 LinkedIn","Deck link","Status","Notes","Persona 1 status","Persona 1 next follow-up","Persona 1 log","Persona 2 status","Persona 2 next follow-up","Persona 2 log"];
+ var k=["company","companyLi","p1Name","p1Title","p1Li","p2Name","p2Title","p2Li","deck","status","notes","p1Status","p1Next","p1Log","p2Status","p2Next","p2Log"];
+ var esc=function(v){return '"'+String(v||"").replace(/"/g,'""')+'"'};
+ var out=[h.map(esc).join(",")].concat(rows.map(function(r){return k.map(function(x){var v=r[x];return esc(Array.isArray(v)?v.map(function(e){return e.d+" "+e.c+": "+e.t}).join(" | "):v)}).join(",")})).join("\n");
+ var t=$("out");t.value=out;t.hidden=false;t.select();try{navigator.clipboard.writeText(out).then(function(){$("note").textContent="CSV copied. Paste it into Excel or Google Sheets."},function(){$("note").textContent="Select the text below and copy it into Excel or Google Sheets."})}catch(e){$("note").textContent="Select the text below and copy it into Excel or Google Sheets."}
+};
+function getRow(){return rows.filter(function(x){return x.id===lpRow})[0]}
+function drawLog(){var r=getRow(),ul=$("ll");ul.textContent="";var lg=plog(r,lpP);
+ if(!lg.length){ul.appendChild(el("li",{"class":"role",text:"No touches logged yet."}));return}
+ lg.forEach(function(e,i){var x=el("button",{"class":"link danger",type:"button",text:"Remove"});x.onclick=function(){lg.splice(i,1);r[lpP+"Log"]=lg;save();drawLog();render()};
+  ul.appendChild(el("li",{},[el("strong",{text:e.d+", "+e.c+": "}),el("span",{text:e.t||""}),el("span",{text:" "}),x]))})}
+function openLog(id,p){lpRow=id;lpP=p;var r=getRow();if(!r)return;$("lpt").textContent=(r[p+"Name"]||"Persona")+" at "+r.company;$("lps").value=pst(r,p);$("lpn").value=r[p+"Next"]||"";$("led").value=today();$("len").value="";drawLog();$("lp").hidden=false;$("lp").scrollIntoView({block:"nearest"});$("len").focus()}
+$("lea").onclick=function(){var r=getRow();if(!r)return;var lg=plog(r,lpP).slice();lg.unshift({d:$("led").value||today(),c:$("lec").value,t:$("len").value.trim()});lg.sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0});r[lpP+"Log"]=lg;if(pst(r,lpP)==="Not contacted")r[lpP+"Status"]="Contacted";$("lps").value=pst(r,lpP);save();$("len").value="";drawLog();render()};
+$("lps").onchange=function(){var r=getRow();if(!r)return;r[lpP+"Status"]=this.value;save();render()};
+$("lpn").onchange=function(){var r=getRow();if(!r)return;r[lpP+"Next"]=this.value;save();render()};
+$("lpx").onclick=function(){$("lp").hidden=true};
+$("due").onclick=function(){dueOnly=!dueOnly;render()};
+function splitRow(l){return(l.indexOf("\t")>-1?l.split("\t"):l.split(",")).map(function(x){return x.trim().replace(/^"|"$/g,"")})}
+$("bulk").onclick=function(){$("bp").hidden=false;$("bt").focus()};
+$("bpx").onclick=function(){$("bp").hidden=true};
+$("ba").onclick=function(){
+ var lines=$("bt").value.split(/\r?\n/).filter(function(l){return l.trim()}),added=0,skipped=0;
+ var have=rows.map(function(r){return(r.company||"").toLowerCase()});
+ lines.forEach(function(l,i){var c=splitRow(l);if(!c[0])return;if(i===0&&/^company/i.test(c[0]))return;
+  if(have.indexOf(c[0].toLowerCase())>-1){skipped++;return}
+  have.push(c[0].toLowerCase());
+  rows.unshift({id:String(Date.now())+Math.random().toString(36).slice(2,6),company:c[0],companyLi:c[1]||"",p1Name:c[2]||"",p1Title:c[3]||"",p1Li:c[4]||"",p2Name:c[5]||"",p2Title:c[6]||"",p2Li:c[7]||"",deck:c[8]||"",status:"Draft",notes:""});added++});
+ if(added){save();render();$("bt").value=""}
+ $("bm").textContent=added+" added"+(skipped?", "+skipped+" skipped as duplicates":"")+"."+(added||skipped?"":" Nothing to add.");
+};
+$("hs").onclick=function(){
+ var map={"Not contacted":"New","Contacted":"Attempted to contact","Replied":"Connected","Positive":"In progress","Not interested":"Unqualified","Referred":"Connected"};
+ var h=["First Name","Last Name","Job Title","LinkedIn URL","Lead Status","Next Follow-up","Touch Log","Company Name","Company LinkedIn Page","Deck Link","Company Notes"];
+ var esc=function(v){return '"'+String(v||"").replace(/"/g,'""')+'"'};
+ var lines=[h.map(esc).join(",")];
+ rows.forEach(function(r){["p1","p2"].forEach(function(p){var n=(r[p+"Name"]||"").trim();if(!n)return;var parts=n.split(/\s+/),first=parts.shift(),last=parts.join(" ");
+  var lg=plog(r,p).map(function(e){return e.d+" "+e.c+": "+e.t}).join(" | ");
+  lines.push([first,last,r[p+"Title"],url(r[p+"Li"]),map[pst(r,p)],r[p+"Next"],lg,r.company,url(r.companyLi),url(r.deck),r.notes].map(esc).join(","))})});
+ if(lines.length<2){alert("Add at least one persona with a name first.");return}
+ var out=lines.join("\n"),t=$("out");t.value=out;t.hidden=false;t.select();
+ try{navigator.clipboard.writeText(out).then(function(){$("note").textContent="HubSpot CSV copied, one row per persona. Paste it into Notepad, save as hubspot-import.csv, then import it in HubSpot."},function(){$("note").textContent="Select the text below, copy it into Notepad, and save it as hubspot-import.csv."})}catch(e){$("note").textContent="Select the text below, copy it into Notepad, and save it as hubspot-import.csv."}
+};
+ST.forEach(function(s){$("lps").appendChild(el("option",{text:s}))});
+load();render();
+(async function(){try{
+ var u=await claude.use("user"),d=await claude.use("db");if(!u||!d)return;
+ var id=await u.id();if(!id)return;if((await u.can("data.write"))===false)return;
+ var ref=d.collection("data/users/"+id).doc("tracker"),snap=await ref.get();
+ if(snap.exists&&Array.isArray(snap.data().rows)){rows=JSON.parse(JSON.stringify(snap.data().rows));try{localStorage.setItem(KEY,JSON.stringify(rows))}catch(e){}}
+ else if(rows.length){await ref.set({rows:rows,updated:Date.now()})}
+ cloud=ref;render();$("note").textContent="Saved to your account, so your data syncs across devices. Export CSV is still there as a backup."
+}catch(e){}})();
+})();
+</script>
+</body>
+</html>
